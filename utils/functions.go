@@ -14,11 +14,10 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"sync"
-
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -156,6 +155,7 @@ func ListenTls(ip string, port int, certBytes, keyBytes []byte) (ln *net.Listene
 	ok := clientCertPool.AppendCertsFromPEM(certBytes)
 	if !ok {
 		err = errors.New("failed to parse root certificate")
+		return
 	}
 	config := &tls.Config{
 		ClientCAs:    clientCertPool,

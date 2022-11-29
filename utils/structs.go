@@ -378,7 +378,7 @@ func (req *HTTPRequest) addPortIfNot() (newHost string) {
 	if req.IsHTTPS() {
 		port = "443"
 	}
-	if (!strings.HasPrefix(req.Host, "[") && strings.Index(req.Host, ":") == -1) || (strings.HasPrefix(req.Host, "[") && strings.HasSuffix(req.Host, "]")) {
+	if (!strings.HasPrefix(req.Host, "[") && !strings.Contains(req.Host, ":")) || (strings.HasPrefix(req.Host, "[") && strings.HasSuffix(req.Host, "]")) {
 		//newHost = req.Host + ":" + port
 		//req.headBuf = []byte(strings.Replace(string(req.headBuf), req.Host, newHost, 1))
 		req.Host = req.Host + ":" + port
