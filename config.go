@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	app     *kingpin.Application
-	service *services.ServiceItem
+	app      *kingpin.Application
+	service  *services.ServiceItem
+	cartPath = ""
 )
 
 func initConfig() (err error) {
@@ -38,8 +39,8 @@ func initConfig() (err error) {
 	app.Author("snail").Version(APP_VERSION)
 	args.Parent = app.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	args.Local = app.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default("/etc/proxy/proxy.crt").String()
-	keyTLS := app.Flag("key", "key file for tls").Short('K').Default("/etc/proxy/proxy.key").String()
+	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default(cartPath + "proxy.crt").String()
+	keyTLS := app.Flag("key", "key file for tls").Short('K').Default(cartPath + "proxy.key").String()
 
 	//########http#########
 	http := app.Command("http", "proxy on http mode")

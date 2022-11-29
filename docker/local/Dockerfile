@@ -1,7 +1,7 @@
 FROM golang:1.19-bullseye as build
 WORKDIR /app
 COPY . .
-RUN CGO_ENABLED=0 go build -o proxy
+RUN CGO_ENABLED=0 go build -ldflags="-X main.cartPath=/etc/proxy/" -o proxy
 RUN ./proxy keygen -C proxy
 
 FROM scratch
