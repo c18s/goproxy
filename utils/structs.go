@@ -6,10 +6,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -32,9 +32,9 @@ type CheckerItem struct {
 	FailCount    uint
 }
 
-//NewChecker args:
-//timeout : tcp timeout milliseconds ,connect to host
-//interval: recheck domain interval seconds
+// NewChecker args:
+// timeout : tcp timeout milliseconds ,connect to host
+// interval: recheck domain interval seconds
 func NewChecker(timeout int, interval int64, blockedFile, directFile string) Checker {
 	ch := Checker{
 		data:     NewConcurrentMap(),
@@ -56,7 +56,7 @@ func NewChecker(timeout int, interval int64, blockedFile, directFile string) Che
 func (c *Checker) loadMap(f string) (dataMap ConcurrentMap) {
 	dataMap = NewConcurrentMap()
 	if PathExists(f) {
-		_contents, err := ioutil.ReadFile(f)
+		_contents, err := os.ReadFile(f)
 		if err != nil {
 			log.Printf("load file err:%s", err)
 			return
@@ -183,7 +183,7 @@ func NewBasicAuth() BasicAuth {
 	}
 }
 func (ba *BasicAuth) AddFromFile(file string) (n int, err error) {
-	_content, err := ioutil.ReadFile(file)
+	_content, err := os.ReadFile(file)
 	if err != nil {
 		return
 	}
