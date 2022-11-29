@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"github.com/snail007/goproxy/services"
-	"github.com/snail007/goproxy/utils"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/snail007/goproxy/services"
+	"github.com/snail007/goproxy/utils"
 )
 
 var (
@@ -38,8 +38,8 @@ func initConfig() (err error) {
 	app.Author("snail").Version(APP_VERSION)
 	args.Parent = app.Flag("parent", "parent address, such as: \"23.32.32.19:28008\"").Default("").Short('P').String()
 	args.Local = app.Flag("local", "local ip:port to listen").Short('p').Default(":33080").String()
-	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default("proxy.crt").String()
-	keyTLS := app.Flag("key", "key file for tls").Short('K').Default("proxy.key").String()
+	certTLS := app.Flag("cert", "cert file for tls").Short('C').Default("/etc/proxy/proxy.crt").String()
+	keyTLS := app.Flag("key", "key file for tls").Short('K').Default("/etc/proxy/proxy.key").String()
 
 	//########http#########
 	http := app.Command("http", "proxy on http mode")
@@ -119,23 +119,23 @@ func initConfig() (err error) {
 
 func poster() {
 	fmt.Printf(`
-		########  ########   #######  ##     ## ##    ## 
-		##     ## ##     ## ##     ##  ##   ##   ##  ##  
-		##     ## ##     ## ##     ##   ## ##     ####   
-		########  ########  ##     ##    ###       ##    
-		##        ##   ##   ##     ##   ## ##      ##    
-		##        ##    ##  ##     ##  ##   ##     ##    
-		##        ##     ##  #######  ##     ##    ##    
-		
+		########  ########   #######  ##     ## ##    ##
+		##     ## ##     ## ##     ##  ##   ##   ##  ##
+		##     ## ##     ## ##     ##   ## ##     ####
+		########  ########  ##     ##    ###       ##
+		##        ##   ##   ##     ##   ## ##      ##
+		##        ##    ##  ##     ##  ##   ##     ##
+		##        ##     ##  #######  ##     ##    ##
+
 		v%s`+" by snail , blog : http://www.host900.com/\n\n", APP_VERSION)
 }
 func tlsBytes(cert, key string) (certBytes, keyBytes []byte) {
-	certBytes, err := ioutil.ReadFile(cert)
+	certBytes, err := os.ReadFile(cert)
 	if err != nil {
 		log.Fatalf("err : %s", err)
 		return
 	}
-	keyBytes, err = ioutil.ReadFile(key)
+	keyBytes, err = os.ReadFile(key)
 	if err != nil {
 		log.Fatalf("err : %s", err)
 		return
