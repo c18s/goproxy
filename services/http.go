@@ -5,9 +5,10 @@ import (
 	"io"
 	"log"
 	"net"
-	"github.com/snail007/goproxy/utils"
 	"runtime/debug"
 	"strconv"
+
+	"github.com/snail007/goproxy/utils"
 )
 
 type HTTP struct {
@@ -72,7 +73,7 @@ func (s *HTTP) callback(inConn net.Conn) {
 	req, err := utils.NewHTTPRequest(&inConn, 4096, s.IsBasicAuth(), &s.basicAuth)
 	if err != nil {
 		if err != io.EOF {
-			log.Printf("decoder error , form %s, ERR:%s", err, inConn.RemoteAddr())
+			log.Printf("Decoder error, form %s, %s", err, inConn.RemoteAddr())
 		}
 		utils.CloseConn(&inConn)
 		return
@@ -94,7 +95,9 @@ func (s *HTTP) callback(inConn net.Conn) {
 		useProxy, _, _ = s.checker.IsBlocked(req.Host)
 		//log.Printf("blocked ? : %v, %s , fail:%d ,success:%d", useProxy, address, n, m)
 	}
-	log.Printf("use proxy : %v, %s", useProxy, address)
+	if useProxy {
+		log.Printf("use proxy: %v, %s", useProxy, address)
+	}
 	//os.Exit(0)
 	err = s.OutToTCP(useProxy, address, &inConn, &req)
 	if err != nil {
@@ -177,6 +180,7 @@ func (s *HTTP) InitBasicAuth() (err error) {
 		log.Printf("auth data added from file %d , total:%d", n, s.basicAuth.Total())
 	}
 	if len(*s.cfg.Auth) > 0 {
+		*s.cfg.Auth = Unique(*s.cfg.Auth)
 		n := s.basicAuth.Add(*s.cfg.Auth)
 		log.Printf("auth data added %d, total:%d", n, s.basicAuth.Total())
 	}
@@ -216,4 +220,16 @@ func (s *HTTP) IsDeadLoop(inLocalAddr string, host string) bool {
 		}
 	}
 	return false
+}
+
+func Unique(s []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range s {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

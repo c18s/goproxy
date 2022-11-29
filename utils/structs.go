@@ -267,7 +267,12 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	req.Method = strings.ToUpper(req.Method)
 	req.isBasicAuth = isBasicAuth
 	req.basicAuth = basicAuth
-	log.Printf("%s:%s", req.Method, req.hostOrURL)
+	log.Printf("%s %s", req.Method, req.hostOrURL)
+
+	err = req.ProxyAuth()
+	if err != nil {
+		return
+	}
 
 	if req.IsHTTPS() {
 		err = req.HTTPS()
@@ -277,12 +282,6 @@ func NewHTTPRequest(inConn *net.Conn, bufSize int, isBasicAuth bool, basicAuth *
 	return
 }
 func (req *HTTPRequest) HTTP() (err error) {
-	if req.isBasicAuth {
-		err = req.BasicAuth()
-		if err != nil {
-			return
-		}
-	}
 	req.URL, err = req.getHTTPURL()
 	if err == nil {
 		u, _ := url.Parse(req.URL)
@@ -305,38 +304,45 @@ func (req *HTTPRequest) IsHTTPS() bool {
 	return req.Method == "CONNECT"
 }
 
-func (req *HTTPRequest) BasicAuth() (err error) {
-
-	//log.Printf("request :%s", string(b[:n]))
-	authorization, err := req.getHeader("Authorization")
+func (req *HTTPRequest) ProxyAuth() (err error) {
+	defer func() {
+		if err != nil {
+			CloseConn(req.conn)
+		}
+	}()
+	// Proxy-Authorization: Basic d2FsdGVyOjEyMw==
+	// 401 Unauthorized 未授权
+	// 403 Forbidden 拒绝访问
+	// 407 Proxy Authentication Required 必须提供代理证书
+	authorization, err := req.getHeader("Proxy-Authorization")
+	basicAuth := "\r\nProxy-Authenticate: Basic realm=\"\"\r\n\r\nProxy Authentication Required"
+	errAuthRequired := fmt.Errorf("HTTP/1.1 407 Proxy Authentication Required")
 	if err != nil {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"\"\r\n\r\nUnauthorized")
-		CloseConn(req.conn)
+		err = errAuthRequired
+		fmt.Fprint((*req.conn), err, basicAuth)
 		return
 	}
-	//log.Printf("Authorization:%s", authorization)
 	basic := strings.Fields(authorization)
 	if len(basic) != 2 {
-		err = fmt.Errorf("authorization data error,ERR:%s", authorization)
-		CloseConn(req.conn)
+		err = errAuthRequired
+		fmt.Fprint((*req.conn), err, basicAuth)
 		return
 	}
 	user, err := base64.StdEncoding.DecodeString(basic[1])
 	if err != nil {
-		err = fmt.Errorf("authorization data parse error,ERR:%s", err)
-		CloseConn(req.conn)
+		err = errAuthRequired
+		fmt.Fprint((*req.conn), err, basicAuth)
 		return
 	}
 	authOk := (*req.basicAuth).Check(string(user))
-	//log.Printf("auth %s,%v", string(user), authOk)
 	if !authOk {
-		fmt.Fprint((*req.conn), "HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized")
-		CloseConn(req.conn)
-		err = fmt.Errorf("basic auth fail")
+		err = fmt.Errorf("HTTP/1.1 401 Unauthorized")
+		fmt.Fprint((*req.conn), errAuthRequired, basicAuth)
 		return
 	}
 	return
 }
+
 func (req *HTTPRequest) getHTTPURL() (URL string, err error) {
 	if !strings.HasPrefix(req.hostOrURL, "/") {
 		return req.hostOrURL, nil

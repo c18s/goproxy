@@ -1,3 +1,5 @@
 /.idea
 /goproxy
 /go.sum
+/proxy.crt
+/proxy.key
